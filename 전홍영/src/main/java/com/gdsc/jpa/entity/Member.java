@@ -43,7 +43,7 @@ public class Member extends BaseTimeEntity {
     }
     //update 메소드
     public void update(MemberDto memberDto) {
-        this.name = toDto().getName();
-        this.age = toDto().getAge();
+        this.name = memberDto.getName();
+        this.age = memberDto.getAge();
     }
 }

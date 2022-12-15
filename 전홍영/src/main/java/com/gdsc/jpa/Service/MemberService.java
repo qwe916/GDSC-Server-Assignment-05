@@ -6,6 +6,8 @@ import com.gdsc.jpa.entity.Team;
 import com.gdsc.jpa.repository.MemberRepository;
 import com.gdsc.jpa.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,15 +48,20 @@ public class MemberService {
         return members.stream()
                 .map(Member::toDto)
                 .collect(Collectors.toList());
-
+    }
+    //pageable을 넘겨주어 team에 속한 멤버를 paging하여 조회
+    @Transactional(readOnly = true)
+    public Page<MemberDto> findAllByTeamIdWithPaging(Long teamId, Pageable pageable) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 ID로 Team을 찾을 수 없음"));
+        Page<Member> members = memberRepository.findAllByTeam(team, pageable);
+        return members.map(Member::toDto);
     }
     @Transactional(readOnly = true)//읽기 전용
-    public List<MemberDto> findAll() {
+    public Page<MemberDto> findAll(Pageable pageable) {
         //모든 member를 조회한다.
-        List<Member> members = memberRepository.findAll();
-        return members.stream()
-                .map(Member::toDto)
-                .collect(Collectors.toList());
+        Page<Member> members = memberRepository.findAll(pageable);
+        return members.map(Member::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -81,7 +88,12 @@ public class MemberService {
         Member member = findEntityById(id);
         //해당 member를 삭제한다.
         memberRepository.delete(member);
+    }
 
+    @Transactional(readOnly = true)
+    public Page<MemberDto> findAllWithPaging(Pageable pageable) {
+        Page<Member> members = memberRepository.findAll(pageable);
+        return members.map(Member::toDto);
     }
 
     private Member findEntityById(Long id) {
@@ -90,5 +102,6 @@ public class MemberService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FOUND, "해당 ID의 팀이 존재하지 않습니다"));
         return member;
     }
+
 
 }
